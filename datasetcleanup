@@ -1,0 +1,61 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Define the paths to your datasets
+collecteddataset0 = r'C:\Users\Yadhu Krishnan\Downloads\Dataset\UNZIP\CTU-IoT-Malware-Capture-21-1conn.log.labeled.csv'
+collecteddataset1 = r'C:\Users\Yadhu Krishnan\Downloads\Dataset\UNZIP\cybersecurity_attacks.csv'
+collecteddataset2 = r'C:\Users\Yadhu Krishnan\Downloads\Dataset\UNZIP\RT_IOT20221'
+
+# Load datasets
+dataset0 = pd.read_csv(collecteddataset0)
+dataset1 = pd.read_csv(collecteddataset1)
+dataset2 = pd.read_csv(collecteddataset2)
+
+# Function to preprocess each dataset
+def preprocess_dataset(dataset):
+    # Select numeric columns
+    numeric_cols = dataset.select_dtypes(include=['number']).columns
+    if len(numeric_cols) > 0:
+        # Fill NaN with median for numeric columns
+        dataset[numeric_cols] = dataset[numeric_cols].fillna(dataset[numeric_cols].median())
+    else:
+        print("No numeric columns found in the dataset.")
+
+# Preprocess each dataset
+preprocess_dataset(dataset0)
+preprocess_dataset(dataset1)
+preprocess_dataset(dataset2)
+
+# Rename target columns
+dataset0.rename(columns={'fraud': 'target'}, inplace=True)
+dataset1.rename(columns={'malicious': 'target'}, inplace=True)
+dataset2.rename(columns={'attack': 'target'}, inplace=True)
+
+# Concatenate datasets
+combined_data = pd.concat([dataset0, dataset1, dataset2], ignore_index=True)
+
+# Check if 'target' column exists
+if 'target' not in combined_data.columns:
+    print("'target' column not found in combined_data. Check column names.")
+
+# Split data into features and target variable
+X = combined_data.drop('target', axis=1)
+y = combined_data['target']
+
+# Check for any remaining NaN or infinite values in X
+if X.isnull().values.any() or not X.isfinite().all().all():
+    print("Warning: X contains NaN or infinite values. Check and handle accordingly.")
+
+# Standardize the features after handling missing values
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Split the dataset into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42, stratify=y)
+
+# Optional: Print shapes of the datasets to verify the splits
+print("X_train shape:", X_train.shape)
+print("X_test shape:", X_test.shape)
+print("y_train shape:", y_train.shape)
+print("y_test shape:", y_test.shape)
